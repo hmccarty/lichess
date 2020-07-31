@@ -13,7 +13,7 @@ import (
 )
 
 const lichessURL = "https://lichess.org"
-const accountPath = "/api/account"
+
 const streamEventPath = "/api/stream/event"
 const seekPath = "/api/board/seek"
 const streamBoardPath = "/api/board/game/stream/"
@@ -21,7 +21,121 @@ const challengePath = "/api/challenge/"
 const gamePath = "/api/board/game/"
 const movePath = "/move/"
 
-type UserResp struct {
+type Lichess struct {
+	client AuthorizedClient
+	user User
+	currGame Game
+}
+
+/*
+ * ACCOUNTS
+ */
+
+const accountPath = "/api/account"
+const emailPath = "/api/account/email"
+const prefPath = "/api/account/preferences"
+const kidModePath = "api/account/kid"
+
+type Profile struct {
+	ID string `json:"id"`
+	Username string `json:"username"`
+	Title string `json:"title"`
+	Online bool `json:"online"`
+	Playing bool `json:"playing"`
+	Streaming bool `json:"streaming"`
+	CreatedAt uint64 `json:"createdAt"`
+	SeenAt uint64 `json:"seenAt"`
+	Details Details `json:"profile"`
+	NbFollowers uint32 `json:"nbFollowers"`
+	NbFollowing uint32 `json:"nbFollowing"`
+	CompletionRate uint8 `json:"completionRate"`
+	Language string `json:"language"`
+	Count Count `json:"count"`
+	Performance Performance `json:"perfs"`
+	Patron bool `json:"patron"`
+	Disabled bool `json:"disabled"`
+	Engine bool `json:"engine"`
+	Booster bool `json:"booster"`
+	PlayTime PlayTime `json:"playTime"`
+}
+
+type Details struct {
+	Bio string `json:"bio"`
+	Country string `json:country"`
+	FirstName string `json:firstName"`
+	LastName string `json:lastName"`
+	Links string `json:links"`
+	Location string `json:location"`
+}
+
+type Count struct {
+	AI uint32 `json:"ai"`
+	All uint32 `json:"all"`
+	Bookmark uint32 `json:"bookmark"`
+	Draw uint32 `json:"draw"`
+	DrawH uint32 `json:"drawH"`
+	Import uint32 `json:"import"`
+	Loss uint32 `json:"loss"`
+	LossH uint32 `json:"lossH"`
+	me uint32 `json:"me"`
+	Playing uint32 `json:"playing"`
+	Rated uint32 `json:"rated"`
+	Win uint32 `json:"win"`
+	WinH uint32 `json:"winH"`
+}
+
+type Performance struct {
+	Blitz PerfType `json:"blitz"`
+	Bullet PerfType `json:"bullet"`
+	Chess960 PerfType `json:"chess960"`
+	Puzzle PerfType `json:"puzzle"`
+}
+
+type PerfType struct {
+	Games uint32 `json:"games"`
+	Progress int16 `json:"prog"`
+	Rating uint16 `json:"rating"`
+	Rd uint16 `json:"rd"`
+}
+
+type PlayTime struct {
+	Total uint64 `json:"total"`
+	Tv uint64 `json:"tv"`
+}
+
+type Preferences struct {
+	DarkMode bool `json:"dark"`
+	TranspMode bool `json:"transp"`
+	BgImg string `json:"bgImg"`
+	Is3D bool `json:"is3d"`
+	Theme string `json:"theme"`
+	PieceSet string `json:"go"`
+	Theme3D string `json:"theme3d"`
+	PieceSet3D string `json:"pieceSet3d"`
+	SoundSet string `json:"soundSet"`
+	BlindFold uint8 `json:"blindFold"`
+	AutoQueen uint8 `json:"autoQueen"`
+	AutoThreeFold uint8 `json:"autoThreefold"`
+	Takeback uint8 `json:"takeback"`
+	ClockTenths uint8 `json:"clockTenths"`
+	ClockBar bool `json:"clockBar"`
+	Premove bool `json:"premove"`
+	Animation uint8 `json:"animation"` 	
+	Captured bool `json:"captured"`	
+	Follow bool `json:"follow"`	
+	Highlight bool `json:"highlight"`	
+	Destination bool `json:"destination"`	
+	Coords uint8 `json:"coords"`	
+	Replay uint8 `json:"replay"`	
+	Challenge uint8 `json:"challenge"`	
+	Message uint8 `json:"message"`	
+	CoordColor uint8 `json:"coordColor"`	
+	SubmitMove uint8 `json:"submitMove"`	
+	ConfirmResign uint8`json:"confirmResign"` 	
+	InsightShare uint8 `json:"insightShare"`	
+	KeyboardMove uint8 `json:"keyboardMove"`	
+	Zen uint8 `json:"zen"`	
+	MoveEvent uint8 `json:"moveEvent"`	
 }
 
 type Event struct {
@@ -75,18 +189,6 @@ type WhiteSide struct {
 type BlackSide struct {
 	ID string `json:"id"`
 	Name string `json:"name"`
-}
-
-type Lichess struct {
-	client AuthorizedClient
-	user User
-	currGame Game
-}
-
-type User struct {
-	ID string `json:"id"`
-	Username string `json:"username"`
-	Title string `json:"title"`
 }
 
 func (l Lichess) authenticateClient() {
