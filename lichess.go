@@ -14,16 +14,9 @@ import (
 
 const lichessURL = "https://lichess.org"
 
-const streamEventPath = "/api/stream/event"
-const seekPath = "/api/board/seek"
-const streamBoardPath = "/api/board/game/stream/"
-const challengePath = "/api/challenge/"
-const gamePath = "/api/board/game/"
-const movePath = "/move/"
-
 type Lichess struct {
 	client AuthorizedClient
-	user User
+	profile Profile
 	currGame Game
 }
 
@@ -138,6 +131,22 @@ type Preferences struct {
 	MoveEvent uint8 `json:"moveEvent"`	
 }
 
+/*
+ * BOARD
+ */
+
+// GET
+const streamEventPath = "/api/stream/event"
+const streamBoardPath = "/api/board/game/stream/%s" // GameID
+
+// POST
+const seekPath = "/api/board/seek"
+const boardMovePath = "/api/board/game/%s/move/%s" // GameID, Move
+const sendChatPath = "/api/board/game/%s/chat" // GameID
+const abortGamePath = "/api/board/game/%s/abort" // GameID
+const resignGamePath = "/api/board/game/%s/resign" // GameID
+const drawGamePath = "/api/board/game/%s/draw/%s" // GameID, Decision
+
 type Event struct {
 	Type string `json:"type"`
 	Challenge Challenge `json:"challenge,omitempty"`
@@ -149,6 +158,8 @@ type Challenge struct {
 	Status string `json:"created"`
 	Challenger Challenger `json:"challenger"`
 	Variant Variant `json:"variant"`
+	Rated bool `json:"rated"`
+	Color string `json:"color"`
 }
 
 type Challenger struct {
@@ -167,6 +178,11 @@ type Variant struct {
 	Short string `json:"short"`
 }
 
+type Clock struct {
+	Initial uint32 `json:"initial"`
+	Increment uint32 `json:"increment"`
+}
+
 type Game struct {
 	ID string `json:"id"`
 	Board chan Board
@@ -174,11 +190,38 @@ type Game struct {
 
 type Board struct {
 	Type string `json:"type"`
-	Moves string `json:"moves,omitempty"`
-	Status string `json:"status,omitempty"`
+
+	// Game Full
+	ID string `json:"id", omitempty`
+	Rated bool `json:"rated, omitempty"`
+	Variant Variant `json:"variant, omitempty"`
+	Clock Clock `json:"clock, omitempty"`
+	Speed string `json:"speed, omitempty"`
+	CreatedAt uint32 `json:"createdAt, omitempty"`
 	White WhiteSide `json:"white,omitempty"`
 	Black BlackSide `json:"black,omitempty"`
+	InitialFen string `json:"initialFen, omitempty"`
+	State State `json:"state, omitempty"`
+
+	// Game State
+	Moves string `json:"moves,omitempty"`
+	Status string `json:"status,omitempty"`
 	Winner string `json:"winner,omitempty"`
+
+	// Chat Line
+	Username string `json:"username, omitempty"`	
+	Text string `json:"text, omitempty"`
+	Room string `json:"room, omitempty"`
+}
+
+type State struct {
+	Type string `json:"gameState"`
+	Moves string `json:"moves"`
+	WhiteTime uint32 `json:"wtime"`
+	BlackTime uint32 `json:"btime"`
+	WhiteIncre uint32 `json:"winc"`
+	BlackIncre uint32 `json:"binc"`
+	Status string `json:"status"`
 }
 
 type WhiteSide struct {
@@ -191,13 +234,11 @@ type BlackSide struct {
 	Name string `json:"name"`
 }
 
-func (l Lichess) authenticateClient() {
+func (l Lichess) authenticateClient(id string, secret string, scopes []string) {
 	conf := &oauth2.Config{
-		ClientID:     os.Getenv("LICHESS_CLIENT_ID"),
-		ClientSecret: os.Getenv("LICHESS_CLIENT_SECRET"),
-		Scopes:       []string{"preference:read",
-		                       "challenge:read", "challenge:write",
-							   "bot:play", "board:play"},
+		ClientID:     id,
+		ClientSecret: secret,
+		Scopes:       scopes,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://oauth.lichess.org/oauth/authorize",
 			TokenURL: "https://oauth.lichess.org/oauth",
@@ -212,8 +253,8 @@ func (l Lichess) authenticateClient() {
 	l.client = *resp
 }
 
-func (l Lichess) getUser() User {
-	if (User{}) == l.user {
+func (l Lichess) getAccount() Profile {
+	if (Profile{}) == l.profile {
 		resp, err := l.client.Get(lichessURL + accountPath)
 		if err != nil {
 			log.Fatal(err)
@@ -221,13 +262,13 @@ func (l Lichess) getUser() User {
 		defer resp.Body.Close()
 
 		dec := json.NewDecoder(resp.Body)
-		user := User{}
-		err = dec.Decode(&user)
+		profile := Profile{}
+		err = dec.Decode(&profile)
 		if err != nil {
 			log.Fatal(err)
 		}
 		
-		l.user = user
+		l.profile = profile
 	}
 	
 	return l.user
@@ -237,7 +278,7 @@ func (l Lichess) getBoardChannel() chan Board {
 	return l.currGame.Board
 }
 
-func (l Lichess) findGame()  {
+func (l Lichess) findAndStartGame()  {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -288,8 +329,13 @@ func watchForGame(client AuthorizedClient, event *Event, wg *sync.WaitGroup) {
 	}
 }
 
-func seekGame(client AuthorizedClient) {
-	_, err := client.Post(lichessURL + seekPath, "application/x-www-form-urlencoded", strings.NewReader("time=10&increment=0"))
+func seekGame(client AuthorizedClient, rated bool, time uint8, incre uint8,
+					variant string, color string, ratingRange string) {
+	
+	params := fmt.Sprintf("rated=%t&time=%d&increment=%d&variant=%s&color=%s&ratingRange=%s",
+							rated, time, incre, variant, color, ratingRange)
+	_, err := client.Post(lichessURL + seekPath, "application/x-www-form-urlencoded", 
+							strings.NewReader(params))
 	if err != nil {
 		log.Fatal(err)
 	}
