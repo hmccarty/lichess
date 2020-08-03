@@ -241,7 +241,7 @@ type BlackSide struct {
 // GET
 
 // POST
-const chanllengeRespPath = "/api/challenge/%s/%s" // ChallengeID, Resp
+const challengeRespPath = "/api/challenge/%s/%s" // ChallengeID, Resp
 
 func (l Lichess) authenticateClient(id string, secret string, scopes []string) {
 	conf := &oauth2.Config{
