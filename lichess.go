@@ -234,6 +234,15 @@ type BlackSide struct {
 	Name string `json:"name"`
 }
 
+/*
+ * CHALLENGE
+ */
+
+// GET
+
+// POST
+const chanllengeRespPath = "/api/challenge/%s/%s" // ChallengeID, Resp
+
 func (l Lichess) authenticateClient(id string, secret string, scopes []string) {
 	conf := &oauth2.Config{
 		ClientID:     id,
@@ -271,20 +280,21 @@ func (l Lichess) getAccount() Profile {
 		l.profile = profile
 	}
 	
-	return l.user
+	return l.profile
 }
 
 func (l Lichess) getBoardChannel() chan Board {
 	return l.currGame.Board
 }
 
-func (l Lichess) findAndStartGame()  {
+func (l Lichess) findAndStartGame(rated bool, time uint8, incre uint8,
+								  variant string, color string, ratingRange string)  {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	event := Event{}
 	watchForGame(l.client, &event, &wg)
-	seekGame(l.client)
+	seekGame(l.client, rated, time, incre, variant, color, ratingRange)
 
 	wg.Wait()
 	l.currGame = event.Game
@@ -319,9 +329,9 @@ func watchForGame(client AuthorizedClient, event *Event, wg *sync.WaitGroup) {
 				response, _ := reader.ReadString('\n')
 
 				if response == "y" {
-					client.Post(lichessURL + challengePath + event.Challenge.ID + "/accept", "plain/text", strings.NewReader(""))
+					client.Post(lichessURL + challengeRespPath + event.Challenge.ID + "/accept", "plain/text", strings.NewReader(""))
 				} else if response == "n" {
-					client.Post(lichessURL + challengePath + event.Challenge.ID + "/decline", "plain/text", strings.NewReader(""))
+					client.Post(lichessURL + challengeRespPath + event.Challenge.ID + "/decline", "plain/text", strings.NewReader(""))
 				} else {
 					fmt.Println("Invalid response")
 				}
