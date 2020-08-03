@@ -243,7 +243,7 @@ type BlackSide struct {
 // POST
 const challengeRespPath = "/api/challenge/%s/%s" // ChallengeID, Resp
 
-func (l Lichess) authenticateClient(id string, secret string, scopes []string) {
+func (l Lichess) AuthenticateClient(id string, secret string, scopes []string) {
 	conf := &oauth2.Config{
 		ClientID:     id,
 		ClientSecret: secret,
@@ -262,7 +262,7 @@ func (l Lichess) authenticateClient(id string, secret string, scopes []string) {
 	l.client = *resp
 }
 
-func (l Lichess) getAccount() Profile {
+func (l Lichess) GetAccount() Profile {
 	if (Profile{}) == l.profile {
 		resp, err := l.client.Get(lichessURL + accountPath)
 		if err != nil {
@@ -283,11 +283,11 @@ func (l Lichess) getAccount() Profile {
 	return l.profile
 }
 
-func (l Lichess) getBoardChannel() chan Board {
+func (l Lichess) GetBoardChannel() chan Board {
 	return l.currGame.Board
 }
 
-func (l Lichess) findAndStartGame(rated bool, time uint8, incre uint8,
+func (l Lichess) FindAndStartGame(rated bool, time uint8, incre uint8,
 								  variant string, color string, ratingRange string)  {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -301,7 +301,7 @@ func (l Lichess) findAndStartGame(rated bool, time uint8, incre uint8,
 	l.currGame.Board = make(chan Board)
 }
 
-func watchForGame(client AuthorizedClient, event *Event, wg *sync.WaitGroup) {
+func WatchForGame(client AuthorizedClient, event *Event, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	resp, err := client.Get(lichessURL + streamEventPath)
@@ -339,7 +339,7 @@ func watchForGame(client AuthorizedClient, event *Event, wg *sync.WaitGroup) {
 	}
 }
 
-func seekGame(client AuthorizedClient, rated bool, time uint8, incre uint8,
+func SeekGame(client AuthorizedClient, rated bool, time uint8, incre uint8,
 					variant string, color string, ratingRange string) {
 	
 	params := fmt.Sprintf("rated=%t&time=%d&increment=%d&variant=%s&color=%s&ratingRange=%s",
@@ -351,7 +351,7 @@ func seekGame(client AuthorizedClient, rated bool, time uint8, incre uint8,
 	}
 }
 
-func (l Lichess) watchForBoardUpdates(gameId string, ch chan<- Board, wg *sync.WaitGroup) {
+func (l Lichess) WatchForBoardUpdates(gameId string, ch chan<- Board, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	resp, err := l.client.Get(lichessURL + streamBoardPath + gameId)
