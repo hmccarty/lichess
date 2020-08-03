@@ -267,14 +267,17 @@ func (l Lichess) GetClient() AuthorizedClient {
 }
 
 func (l Lichess) GetAccount() Profile {
+	fmt.Println(l.profile)	
+	fmt.Println("Check 1")
 	if (Profile{}) == l.profile {
+		fmt.Println("Check 2")
 		resp, err := l.client.Get(lichessURL + accountPath)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer resp.Body.Close()
 
-		fmt.Println("Check 3")
+		fmt.Println("Check 3"
 
 		dec := json.NewDecoder(resp.Body)
 		profile := Profile{}
