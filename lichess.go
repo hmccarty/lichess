@@ -262,6 +262,10 @@ func (l Lichess) AuthenticateClient(id string, secret string, scopes []string) {
 	l.client = *resp
 }
 
+func (l Lichess) GetClient() AuthorizedClient {
+	return l.client
+}
+
 func (l Lichess) GetAccount() Profile {
 	if (Profile{}) == l.profile {
 		resp, err := l.client.Get(lichessURL + accountPath)
