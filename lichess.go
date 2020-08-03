@@ -277,7 +277,7 @@ func (l Lichess) GetAccount() Profile {
 		}
 		defer resp.Body.Close()
 
-		fmt.Println("Check 3"
+		fmt.Println("Check 3")
 
 		dec := json.NewDecoder(resp.Body)
 		profile := Profile{}
