@@ -293,8 +293,8 @@ func (l Lichess) FindAndStartGame(rated bool, time uint8, incre uint8,
 	wg.Add(1)
 
 	event := Event{}
-	watchForGame(l.client, &event, &wg)
-	seekGame(l.client, rated, time, incre, variant, color, ratingRange)
+	WatchForGame(l.client, &event, &wg)
+	SeekGame(l.client, rated, time, incre, variant, color, ratingRange)
 
 	wg.Wait()
 	l.currGame = event.Game
