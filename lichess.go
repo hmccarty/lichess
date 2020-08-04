@@ -15,7 +15,7 @@ import (
 const lichessURL = "https://lichess.org"
 
 type Lichess struct {
-	client AuthorizedClient
+	client *AuthorizedClient
 	profile Profile
 	currGame Game
 }
