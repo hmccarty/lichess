@@ -261,7 +261,7 @@ func (l Lichess) AuthenticateClient(id string, secret string, scopes []string) {
 	l.client = resp
 }
 
-func (l Lichess) GetClient() AuthorizedClient {
+func (l Lichess) GetClient() *AuthorizedClient {
 	return l.client
 }
 
@@ -311,7 +311,7 @@ func (l Lichess) FindAndStartGame(rated bool, time uint8, incre uint8,
 	l.currGame.Board = make(chan Board)
 }
 
-func WatchForGame(client AuthorizedClient, event *Event, wg *sync.WaitGroup) {
+func WatchForGame(client *AuthorizedClient, event *Event, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	resp, err := client.Get(lichessURL + streamEventPath)
@@ -349,7 +349,7 @@ func WatchForGame(client AuthorizedClient, event *Event, wg *sync.WaitGroup) {
 	}
 }
 
-func SeekGame(client AuthorizedClient, rated bool, time uint8, incre uint8,
+func SeekGame(client *AuthorizedClient, rated bool, time uint8, incre uint8,
 					variant string, color string, ratingRange string) {
 	
 	params := fmt.Sprintf("rated=%t&time=%d&increment=%d&variant=%s&color=%s&ratingRange=%s",
