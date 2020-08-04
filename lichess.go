@@ -258,8 +258,7 @@ func (l Lichess) AuthenticateClient(id string, secret string, scopes []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(*resp)
-	l.client = *resp
+	l.client = resp
 }
 
 func (l Lichess) GetClient() AuthorizedClient {
